@@ -12,9 +12,3 @@ RUN apk add --no-cache curl ffmpeg \
 
 # Switch back to node user
 USER node
-
-# Expose the n8n port
-EXPOSE 5678
-
-# Command to run n8n
-CMD ["n8n"]
