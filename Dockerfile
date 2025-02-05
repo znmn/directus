@@ -7,7 +7,8 @@ WORKDIR /home/node/.n8n
 USER root
 RUN apk add --no-cache curl ffmpeg \
     && addgroup -S docker || true \
-    && adduser node docker
+    && adduser node docker \
+    && curl -o /home/node/DigiCertGlobalRootCA.crt.pem https://www.digicert.com/CACerts/DigiCertGlobalRootCA.crt.pem
 
 # Switch back to node user
 USER node
