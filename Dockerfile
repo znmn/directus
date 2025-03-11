@@ -27,12 +27,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install latest Node.js (LTS) & npm from NodeSource
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
 # Set environment variables for user authentication
-ENV TTYD_USER="admin"
+ENV TTYD_USER="zain"
 ENV TTYD_PASS="password"
 ENV TTYD_PORT=8989
 
