@@ -4,6 +4,11 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Jakarta
 
+# Set environment variables for user authentication
+ENV TTYD_USER "admin"
+ENV TTYD_PASS "password"
+ENV TTYD_PORT=8989
+
 # Install dependencies, including sudo
 RUN apt-get update && apt-get install -y \
     wget \
@@ -29,11 +34,10 @@ RUN apt-get update && apt-get install -y \
     && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
 
-# Create new user "zain" with password "password"
-RUN useradd -m -s /bin/bash zain \
-    && echo "zain:password" | chpasswd \
-    && usermod -aG sudo zain \
-    && echo "zain ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Create new user 
+RUN useradd -m -s /bin/bash $TTYD_USER \
+    && echo "$TTYD_USER:$TTYD_PASS" | chpasswd \
+    && usermod -aG sudo $TTYD_USER
 
 # Set working directory to /home/zain
 WORKDIR /home/zain
@@ -49,12 +53,8 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && rm -rf /opt/ttyd
 
 # Expose port
-EXPOSE 8989
-
-# Set environment variables for user authentication
-ENV TTYD_USER "admin"
-ENV TTYD_PASS "password"
+EXPOSE $TTYD_PORT
 
 # Switch to user "zain" and run ttyd on container start
-USER zain
-CMD ttyd -p 8989 -c "$TTYD_USER:$TTYD_PASS" -W bash
+USER $TTYD_USER
+CMD ttyd -d 0 -p $TTYD_PORT -c "$TTYD_USER:$TTYD_PASS" -W bash
