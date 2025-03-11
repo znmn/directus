@@ -28,4 +28,4 @@ ENV TTYD_USER "admin"
 ENV TTYD_PASS "password"
 
 # Run ttyd on container start
-CMD ttyd -p 8989 -c "$TTYD_USER:$TTYD_PASS" -w bash
+CMD ["ttyd", "-p", "8989", "-c", "$TTYD_USER:$TTYD_PASS", "-w", "-W", "bash"]
