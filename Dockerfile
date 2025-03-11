@@ -1,24 +1,27 @@
-# Start from the official Directus image
-FROM directus/directus:11.3.5
+# Use an official Ubuntu base image
+FROM ubuntu:latest
 
-# Example: (Optional) Install additional packages your project may need
-# RUN apk add --no-cache some-package
+# Set environment variables to prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Example: (Optional) Copy in your custom extensions if you don't mount them as volumes
-# COPY ./extensions /directus/extensions
+# Update and install OpenSSH Server and a simple HTTP server
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    apache2 \
+    && rm -rf /var/lib/apt/lists/*
 
-# You can set environment variables here,
-# but typically these are passed in at runtime via docker-compose.yml
-ENV SECRET="replace-with-secure-random-value" \
-    ADMIN_EMAIL="admin@example.com" \
-    ADMIN_PASSWORD="d1r3ctu5" \
-    DB_CLIENT="sqlite3" \
-    DB_FILENAME="/directus/database/data.db" \
-    WEBSOCKETS_ENABLED="true"
+# Create SSH directory
+RUN mkdir /var/run/sshd
 
-# Expose Directus’s default port
-EXPOSE 8055
+# Create a user for SSH access
+RUN useradd -m -s /bin/bash user && echo "user:password" | chpasswd
 
-# The default entrypoint/cmd in the Directus image runs "directus start"
-# so you usually don’t need to change it unless you have a custom process.
-CMD ["directus", "start"]
+# Allow root login and password authentication (not recommended for production)
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Expose SSH and HTTP ports
+EXPOSE 22 80
+
+# Start SSH and HTTP services
+CMD service apache2 start && /usr/sbin/sshd -D
