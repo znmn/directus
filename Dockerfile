@@ -1,5 +1,9 @@
 FROM ubuntu:22.04
 
+# Set timezone environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Asia/Jakarta
+
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
@@ -16,6 +20,9 @@ RUN apt-get update && apt-get install -y \
     php-common \
     php-curl \
     screen \
+    tzdata \
+    && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
     && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
 
