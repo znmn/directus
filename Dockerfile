@@ -7,6 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
+    curl \
+    nano \
     build-essential \
     cmake \
     git \
@@ -20,13 +22,19 @@ RUN apt-get update && apt-get install -y \
     php-common \
     php-curl \
     screen \
-    curl \
-    nano \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
+
+# Create new user "zain" with password "password"
+RUN useradd -m -s /bin/bash zain \
+    && echo "zain:password" | chpasswd \
+    && usermod -aG sudo zain
+
+# Set working directory to /home/zain
+WORKDIR /home/zain
 
 # Clone and build ttyd
 RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
@@ -45,5 +53,6 @@ EXPOSE 8989
 ENV TTYD_USER "admin"
 ENV TTYD_PASS "password"
 
-# Run ttyd on container start
+# Switch to user "zain" and run ttyd on container start
+USER zain
 CMD ttyd -p 8989 -c "$TTYD_USER:$TTYD_PASS" -W bash
