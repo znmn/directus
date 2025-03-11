@@ -11,7 +11,7 @@ ENV PORT=8181
 
 # Install prerequisites including python, nodejs, npm, PHP, Git, screen, and curl.
 RUN apt-get update && \
-    apt-get install -y python nodejs npm libapache2-mod-php php php-common php-curl git screen curl && \
+    apt-get install -y python3 nodejs npm libapache2-mod-php php php-common php-curl git screen curl && \
     # Ensure 'node' is available (Ubuntu sometimes installs it as 'nodejs')
     if [ ! -e /usr/bin/node ]; then ln -sf /usr/bin/nodejs /usr/bin/node; fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
