@@ -4,11 +4,12 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Jakarta
 
-# Install dependencies
+# Install dependencies, including sudo
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
     nano \
+    sudo \
     build-essential \
     cmake \
     git \
@@ -31,7 +32,8 @@ RUN apt-get update && apt-get install -y \
 # Create new user "zain" with password "password"
 RUN useradd -m -s /bin/bash zain \
     && echo "zain:password" | chpasswd \
-    && usermod -aG sudo zain
+    && usermod -aG sudo zain \
+    && echo "zain ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Set working directory to /home/zain
 WORKDIR /home/zain
