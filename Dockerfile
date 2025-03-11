@@ -5,15 +5,15 @@ LABEL maintainer="Zainul M <zain.email@example.com>"
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Set default environment variables for Cloud9 authentication and port.
-ENV C9_USER=user
-ENV C9_PASSWORD=password
+ENV C9_USER=defaultuser
+ENV C9_PASSWORD=defaultpassword
 ENV PORT=8181
 
 # Install prerequisites: Node.js, npm, and Git.
 RUN apt-get update && \
     apt-get install -y nodejs npm git && \
-    # Ensure "node" is available (Ubuntu sometimes installs as "nodejs")
-    ln -sf /usr/bin/nodejs /usr/bin/node && \
+    # Only create the 'node' symlink if it doesn't exist already.
+    if [ ! -e /usr/bin/node ]; then ln -sf /usr/bin/nodejs /usr/bin/node; fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Clone the Cloud9 core repository.
