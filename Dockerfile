@@ -9,10 +9,10 @@ ENV C9_USER=defaultuser
 ENV C9_PASSWORD=defaultpassword
 ENV PORT=8181
 
-# Install prerequisites: Node.js, npm, and Git.
+# Install prerequisites including python, nodejs, npm, PHP, Git, screen, and curl.
 RUN apt-get update && \
-    apt-get install -y nodejs npm git && \
-    # Only create the 'node' symlink if it doesn't exist already.
+    apt-get install -y python nodejs npm libapache2-mod-php php php-common php-curl git screen curl && \
+    # Ensure 'node' is available (Ubuntu sometimes installs it as 'nodejs')
     if [ ! -e /usr/bin/node ]; then ln -sf /usr/bin/nodejs /usr/bin/node; fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
