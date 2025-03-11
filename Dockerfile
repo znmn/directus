@@ -8,6 +8,14 @@ RUN apt-get update && apt-get install -y \
     git \
     libjson-c-dev \
     libwebsockets-dev \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm \
+    php \
+    php-common \
+    php-curl \
+    screen \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build ttyd
