@@ -9,9 +9,11 @@ ENV C9_USER=defaultuser
 ENV C9_PASSWORD=defaultpassword
 ENV PORT=8181
 
-# Install prerequisites including python, nodejs, npm, PHP, Git, screen, and curl.
+# Install prerequisites including Python2 (via python2-minimal), Node.js, npm, PHP, Git, screen, and curl.
 RUN apt-get update && \
-    apt-get install -y python2 nodejs npm libapache2-mod-php php php-common php-curl git screen curl && \
+    apt-get install -y python2-minimal nodejs npm libapache2-mod-php php php-common php-curl git screen curl && \
+    # Create symlink for 'python' pointing to python2 if it doesn't exist.
+    if [ ! -e /usr/bin/python ]; then ln -sf /usr/bin/python2 /usr/bin/python; fi && \
     # Ensure 'node' is available (Ubuntu sometimes installs it as 'nodejs')
     if [ ! -e /usr/bin/node ]; then ln -sf /usr/bin/nodejs /usr/bin/node; fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
