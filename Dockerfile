@@ -1,27 +1,31 @@
-# Use an official Ubuntu base image
 FROM ubuntu:latest
+LABEL maintainer="Zainul M <zain.email@example.com>"
 
-# Set environment variables to prevent interactive prompts
+# Disable interactive prompts during package installation.
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update and install OpenSSH Server and a simple HTTP server
-RUN apt-get update && apt-get install -y \
-    openssh-server \
-    apache2 \
-    && rm -rf /var/lib/apt/lists/*
+# Set default environment variables for Cloud9 authentication and port.
+ENV C9_USER=user
+ENV C9_PASSWORD=password
+ENV PORT=8181
 
-# Create SSH directory
-RUN mkdir /var/run/sshd
+# Install prerequisites: Node.js, npm, and Git.
+RUN apt-get update && \
+    apt-get install -y nodejs npm git && \
+    # Ensure "node" is available (Ubuntu sometimes installs as "nodejs")
+    ln -sf /usr/bin/nodejs /usr/bin/node && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create a user for SSH access
-RUN useradd -m -s /bin/bash user && echo "user:password" | chpasswd
+# Clone the Cloud9 core repository.
+WORKDIR /opt
+RUN git clone https://github.com/c9/core.git c9sdk
 
-# Allow root login and password authentication (not recommended for production)
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+# Change working directory to the Cloud9 SDK and run its installation script.
+WORKDIR /opt/c9sdk
+RUN chmod +x scripts/install-sdk.sh && ./scripts/install-sdk.sh
 
-# Expose SSH and HTTP ports
-EXPOSE 22 80
+# Expose the port (default 8181) so the IDE can be accessed externally.
+EXPOSE ${PORT}
 
-# Start SSH and HTTP services
-CMD service apache2 start && /usr/sbin/sshd -D
+# Start Cloud9 binding to all interfaces, using the provided credentials.
+CMD ["sh", "-c", "node server.js -l 0.0.0.0 -p $PORT -a $C9_USER:$C9_PASSWORD"]
