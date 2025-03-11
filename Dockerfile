@@ -17,8 +17,6 @@ RUN apt-get update && apt-get install -y \
     libwebsockets-dev \
     python3 \
     python3-pip \
-    nodejs \
-    npm \
     php \
     php-common \
     php-curl \
@@ -26,8 +24,12 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
-    && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
+
+# Install latest Node.js (LTS) & npm from NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - \
+    && apt-get install -y nodejs \
+    && npm install -g pnpm
 
 # Set environment variables for user authentication
 ENV TTYD_USER="admin"
@@ -58,4 +60,4 @@ EXPOSE $TTYD_PORT
 
 # Switch to the created user and run ttyd
 USER $TTYD_USER
-CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash -l
+CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
