@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     php-common \
     php-curl \
     screen \
+    curl \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
