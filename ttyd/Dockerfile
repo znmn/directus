@@ -61,4 +61,5 @@ EXPOSE $TTYD_PORT
 
 # Switch to the created user and run ttyd
 USER $TTYD_USER
+COPY . .
 CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
