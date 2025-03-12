@@ -55,8 +55,11 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make install \
     && rm -rf /opt/ttyd
 
-# Expose port (default 8989, can be changed via ENV)
-EXPOSE $TTYD_PORT
+# Install Nginx Proxy Manager via Proxmox script
+RUN sh -c "$(wget --no-cache -qO- https://raw.githubusercontent.com/ej52/proxmox/main/install.sh)" -s --cleanup --app nginx-proxy-manager
+
+# Expose TTYD and Nginx Proxy Manager ports
+EXPOSE $TTYD_PORT 80 81 443
 
 # Switch to the created user and run ttyd
 USER $TTYD_USER
