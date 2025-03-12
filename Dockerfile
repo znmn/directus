@@ -1,15 +1,10 @@
-# Use Nginx Proxy Manager as the base image
-FROM jc21/nginx-proxy-manager:latest
+FROM ubuntu:22.04
 
-# Set timezone environment variables
+# Set timezone environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=Asia/Jakarta \
-    DISABLE_IPV6=true \
-    TTYD_USER="zain" \
-    TTYD_PASS="password" \
-    TTYD_PORT=8989
+    TZ=Asia/Jakarta
 
-# Install additional dependencies
+# Install dependencies, including sudo
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -36,6 +31,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
+# Set environment variables for user authentication
+ENV TTYD_USER="zain"
+ENV TTYD_PASS="password"
+ENV TTYD_PORT=8989
+
 # Create a new user dynamically using TTYD_USER
 RUN useradd -m -s /bin/bash "$TTYD_USER" \
     && echo "$TTYD_USER:$TTYD_PASS" | chpasswd \
@@ -55,8 +55,9 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make install \
     && rm -rf /opt/ttyd
 
-# Expose necessary ports for ttyd and Nginx Proxy Manager
-EXPOSE $TTYD_PORT 80 443 81
+# Expose port (default 8989, can be changed via ENV)
+EXPOSE $TTYD_PORT
 
-# Default command to start both services
-CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash & /init
+# Switch to the created user and run ttyd
+USER $TTYD_USER
+CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
