@@ -36,7 +36,7 @@ WORKDIR /tmp
 RUN wget --no-cache -qO install.sh https://raw.githubusercontent.com/ej52/proxmox/main/install.sh \
     && sed -i 's/^\(.*stty.*\)$/# \1/' install.sh \
     && chmod +x install.sh \
-    && sh install.sh -s --app nginx-proxy-manager --cleanup
+    && sh install.sh --app nginx-proxy-manager --cleanup
 
 # Set environment variables for ttyd user authentication
 ENV TTYD_USER="zain"
