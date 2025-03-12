@@ -31,12 +31,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
-# Download, modify, and execute the installation script for nginx-proxy-manager
-WORKDIR /tmp
-RUN wget --no-cache -qO install.sh https://raw.githubusercontent.com/ej52/proxmox/main/install.sh \
-    && sed -i 's/^\(.*stty.*\)$/# \1/' install.sh \
-    && chmod +x install.sh \
-    && sh install.sh --app nginx-proxy-manager --cleanup
+# Download, modify (comment out stty calls), and run the nginxproxymanager script
+RUN wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/nginxproxymanager.sh \
+    | bash
 
 # Set environment variables for ttyd user authentication
 ENV TTYD_USER="zain"
