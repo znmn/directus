@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
 # Install latest Node.js (LTS) & npm from NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
-    && npm install -g pnpm
+    && npm install -g pnpm http-server
 
 # Set environment variables for user authentication
 ENV TTYD_USER="zain"
@@ -56,10 +56,14 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make install \
     && rm -rf /opt/ttyd
 
-# Expose ports
-EXPOSE $TTYD_PORT
+# Expose ports for web app testing
+EXPOSE 80 3000 5000 8080 $TTYD_PORT
 
-# Switch to the created user and run ttyd
-USER 80 3000 5000 8080 $TTYD_USER
+# Copy mock server script
+COPY mock_server.sh /usr/local/bin/mock_server.sh
+RUN chmod +x /usr/local/bin/mock_server.sh
+
+# Switch to the created user and run ttyd with mock servers
+USER $TTYD_USER
 COPY . .
-CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
+CMD /usr/local/bin/mock_server.sh & ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
