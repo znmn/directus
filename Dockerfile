@@ -39,6 +39,7 @@ RUN wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/nginx
 ENV TTYD_USER="zain"
 ENV TTYD_PASS="password"
 ENV TTYD_PORT=8989
+ENV TERM=xterm
 
 # Create a new user dynamically using TTYD_USER and configure sudo privileges
 RUN useradd -m -s /bin/bash "$TTYD_USER" \
