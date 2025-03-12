@@ -3,7 +3,7 @@ FROM jc21/nginx-proxy-manager:latest
 
 # Menetapkan variabel lingkungan opsional
 # ENV DB_SQLITE_FILE="/data/database.sqlite"
-# ENV DISABLE_IPV6="true"
+ENV DISABLE_IPV6="true"
 
 # Membuka port yang diperlukan
 EXPOSE 80 443 81
