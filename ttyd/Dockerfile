@@ -60,7 +60,7 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
 EXPOSE 80 3000 5000 8080 $TTYD_PORT
 
 # Copy mock server script
-COPY mock_server.sh /usr/local/bin/mock_server.sh
+COPY ttyd/mock_server.sh /usr/local/bin/mock_server.sh
 RUN chmod +x /usr/local/bin/mock_server.sh
 
 # Switch to the created user and run ttyd with mock servers
