@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Jakarta
 
-# Install dependencies, including sudo
+# Install dependencies, including sudo and required build tools
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -26,17 +26,24 @@ RUN apt-get update && apt-get install -y \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Install latest Node.js (LTS) & npm from NodeSource
+# Install latest Node.js (LTS) & npm from NodeSource, then install pnpm globally
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
-# Set environment variables for user authentication
+# Download, modify, and execute the installation script for nginx-proxy-manager
+WORKDIR /tmp
+RUN wget --no-cache -qO install.sh https://raw.githubusercontent.com/ej52/proxmox/main/install.sh \
+    && sed -i 's/^\(.*stty.*\)$/# \1/' install.sh \
+    && chmod +x install.sh \
+    && sh install.sh -s --app nginx-proxy-manager --cleanup
+
+# Set environment variables for ttyd user authentication
 ENV TTYD_USER="zain"
 ENV TTYD_PASS="password"
 ENV TTYD_PORT=8989
 
-# Create a new user dynamically using TTYD_USER
+# Create a new user dynamically using TTYD_USER and configure sudo privileges
 RUN useradd -m -s /bin/bash "$TTYD_USER" \
     && echo "$TTYD_USER:$TTYD_PASS" | chpasswd \
     && usermod -aG sudo "$TTYD_USER" \
@@ -45,7 +52,7 @@ RUN useradd -m -s /bin/bash "$TTYD_USER" \
 # Set working directory for the user
 WORKDIR /home/$TTYD_USER
 
-# Clone and build ttyd
+# Clone, build, and install ttyd
 RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && cd /opt/ttyd \
     && mkdir build \
@@ -55,7 +62,7 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make install \
     && rm -rf /opt/ttyd
 
-# Expose port (default 8989, can be changed via ENV)
+# Expose the ttyd port (default 8989)
 EXPOSE $TTYD_PORT
 
 # Switch to the created user and run ttyd
