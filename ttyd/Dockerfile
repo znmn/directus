@@ -57,7 +57,7 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && rm -rf /opt/ttyd
 
 # Expose ports for web app testing
-EXPOSE 80 3000 5000 8080 $TTYD_PORT
+EXPOSE 3000 5000 8000 8080 $TTYD_PORT
 
 # Copy mock server script
 COPY ttyd/mock_server.sh /usr/local/bin/mock_server.sh
