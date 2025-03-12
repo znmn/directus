@@ -33,7 +33,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
 
 # Download, modify (comment out stty calls), and run the nginxproxymanager script
 RUN wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/nginxproxymanager.sh \
-    | bash
+    | sed '/SPINNER_PID/d' | bash
 
 # Set environment variables for ttyd user authentication
 ENV TTYD_USER="zain"
