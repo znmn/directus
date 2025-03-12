@@ -56,8 +56,8 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make install \
     && rm -rf /opt/ttyd
 
-# Expose port (default 8989, can be changed via ENV)
-EXPOSE $TTYD_PORT
+# Expose ports
+EXPOSE 80 443 81 $TTYD_PORT
 
 # Switch to the created user and run ttyd
 USER $TTYD_USER
