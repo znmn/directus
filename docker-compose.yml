@@ -1,23 +1,24 @@
+version: '3.8'
 services:
-  app:
+  nginx-proxy:
     image: 'jc21/nginx-proxy-manager:latest'
     restart: unless-stopped
     ports:
-      # These ports are in format <host-port>:<container-port>
-      - '80:80' # Public HTTP Port
+      - '80:80'   # Public HTTP Port
       - '443:443' # Public HTTPS Port
-      - '81:81' # Admin Web Port
-      # Add any other Stream port you want to expose
-      # - '21:21' # FTP
-
+      - '81:81'   # Admin Web Port
     environment:
-      # Uncomment this if you want to change the location of
-      # the SQLite DB file within the container
-      # DB_SQLITE_FILE: "/data/database.sqlite"
-
-      # Uncomment this if IPv6 is not enabled on your host
       DISABLE_IPV6: 'true'
-
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
+
+  ttyd:
+    build: ./ttyd  # Menjalankan Dockerfile untuk ttyd dari direktori ttyd
+    restart: unless-stopped
+    ports:
+      - '8989:8989'  # Port untuk ttyd (web-based terminal)
+    environment:
+      - TTYD_USER=zain
+      - TTYD_PASS=password
+      - TTYD_PORT=8989
