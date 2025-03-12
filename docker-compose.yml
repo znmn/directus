@@ -12,3 +12,12 @@ services:
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
+  ttyd:
+    build: ./ttyd  # Menjalankan Dockerfile untuk ttyd dari direktori ttyd
+    restart: unless-stopped
+    ports:
+      - '8989:8989'  # Port untuk ttyd (web-based terminal)
+    environment:
+      - TTYD_USER=zain
+      - TTYD_PASS=password
+      - TTYD_PORT=8989
