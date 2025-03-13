@@ -32,13 +32,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
-# Configure swap (2GB)
-RUN sudo fallocate -l 2G /swapfile \
-    && chmod 600 /swapfile \
-    && mkswap /swapfile \
-    && swapon /swapfile \
-    && echo '/swapfile none swap sw 0 0' >> /etc/fstab
-
 # Define users and passwords dynamically
 ENV USERS="zain,user1,user2,user3,user4"
 ENV PASSWORDS="pass1,pass2,pass3,pass4,pass5"
