@@ -41,7 +41,7 @@ for i in "${!USER_LIST[@]}"; do
     fi
 
     echo "Starting ttyd for $USER on port $PORT in $HOME_DIR..."
-    su -c "cd $HOME_DIR && ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -W bash -l" "$USER" &
+    su -c "ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -w \"$HOME_DIR\" -W bash -l" "$USER" &
 
     ((PORT++))
 done
