@@ -1,7 +1,7 @@
 # Dockerfile
 FROM ubuntu:22.04
 
-# Set timezone environment variables to avoid interactive prompts
+# Set timezone environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Jakarta
 
@@ -32,34 +32,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
-# Set environment variables for user authentication
-ENV TTYD_USER="zain"
-ENV TTYD_PASS="password"
-ENV TTYD_PORT=8989
+# Configure swap (2GB)
+RUN fallocate -l 2G /swapfile \
+    && chmod 600 /swapfile \
+    && mkswap /swapfile \
+    && swapon /swapfile \
+    && echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
-# Create a new user dynamically using TTYD_USER
-RUN useradd -m -s /bin/bash "$TTYD_USER" \
-    && echo "$TTYD_USER:$TTYD_PASS" | chpasswd \
-    && usermod -aG sudo "$TTYD_USER" \
-    && echo "$TTYD_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Define users and passwords dynamically
+ENV USERS="zain,user1,user2,user3,user4"
+ENV PASSWORDS="pass1,pass2,pass3,pass4,pass5"
+ENV START_PORT=8989
 
-# Set working directory for the user
-WORKDIR /home/$TTYD_USER
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Clone and build ttyd
-RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
-    && cd /opt/ttyd \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-    && make \
-    && make install \
-    && rm -rf /opt/ttyd
+# Expose ports (assuming max 10 users)
+EXPOSE 8989-8999
 
-# Expose ports
-EXPOSE $TTYD_PORT
-
-# Switch to the created user and run ttyd
-USER $TTYD_USER
-COPY . .
-CMD ttyd -d 0 -p "$TTYD_PORT" -c "$TTYD_USER:$TTYD_PASS" -W bash
+# Run startup script to launch ttyd for all users
+CMD ["/bin/bash", "/start.sh"]
