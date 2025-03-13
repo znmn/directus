@@ -41,6 +41,16 @@ ENV START_PORT=8989
 COPY ttyd/start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Clone and build ttyd
+RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
+    && cd /opt/ttyd \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && make \
+    && make install \
+    && rm -rf /opt/ttyd
+    
 # Expose ports (assuming max 10 users)
 EXPOSE 8989-8999
 
