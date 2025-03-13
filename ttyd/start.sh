@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Configure swap (2GB)
+if ! swapon --show | grep -q '/swapfile'; then
+    echo "Creating and enabling swap..."
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+else
+    echo "Swap already enabled."
+fi
+
 # Read users and passwords from ENV
 IFS=',' read -ra USER_LIST <<< "$USERS"
 IFS=',' read -ra PASS_LIST <<< "$PASSWORDS"
@@ -25,7 +37,7 @@ for i in "${!USER_LIST[@]}"; do
 
     echo "Starting ttyd for $USER on port $PORT..."
     su -c "ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -W bash" "$USER" &
-    
+
     ((PORT++))
 done
 
