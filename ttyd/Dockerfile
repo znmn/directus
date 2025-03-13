@@ -33,7 +33,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && npm install -g pnpm
 
 # Configure swap (2GB)
-RUN fallocate -l 2G /swapfile \
+RUN sudo fallocate -l 2G /swapfile \
     && chmod 600 /swapfile \
     && mkswap /swapfile \
     && swapon /swapfile \
