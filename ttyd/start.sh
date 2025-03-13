@@ -17,7 +17,7 @@ IFS=',' read -ra USER_LIST <<< "$USERS"
 IFS=',' read -ra PASS_LIST <<< "$PASSWORDS"
 
 # Check if user count matches password count
-if [ "${#USER_LIST[@]}" -ne "${#PASS_LIST[@]}"]; then
+if [ "${#USER_LIST[@]}" -ne "${#PASS_LIST[@]}" ]; then
     echo "ERROR: The number of users and passwords must match!"
     exit 1
 fi
@@ -28,8 +28,9 @@ PORT=$START_PORT
 for i in "${!USER_LIST[@]}"; do
     USER="${USER_LIST[$i]}"
     PASS="${PASS_LIST[$i]}"
+    HOME_DIR="/home/$USER"
 
-    echo "Creating user: $USER"
+    echo "Creating user: $USER with home directory: $HOME_DIR"
     useradd -m -s /bin/bash "$USER"
     echo "$USER:$PASS" | chpasswd
 
@@ -39,8 +40,8 @@ for i in "${!USER_LIST[@]}"; do
         echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     fi
 
-    echo "Starting ttyd for $USER on port $PORT..."
-    su -c "ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -W bash" "$USER" &
+    echo "Starting ttyd for $USER on port $PORT in $HOME_DIR..."
+    su -c "cd $HOME_DIR && ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -W bash -l" "$USER" &
 
     ((PORT++))
 done
