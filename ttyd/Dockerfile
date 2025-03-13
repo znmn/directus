@@ -45,7 +45,7 @@ ENV PASSWORDS="pass1,pass2,pass3,pass4,pass5"
 ENV START_PORT=8989
 
 # Copy startup script
-COPY start.sh /start.sh
+COPY ttyd/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Expose ports (assuming max 10 users)
