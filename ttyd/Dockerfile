@@ -21,6 +21,9 @@ RUN apt-get update && apt-get install -y \
     php \
     php-common \
     php-curl \
+    php-zip \
+    libzip-dev \
+    oniguruma-dev \
     screen \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
@@ -50,9 +53,9 @@ RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
     && make \
     && make install \
     && rm -rf /opt/ttyd
-    
-# Expose ports (assuming max 10 users)
-EXPOSE 8989-8999
 
-# Run startup script to launch ttyd for all users
+# Expose ports (assuming max 10 users) + Tiny File Manager (9000)
+EXPOSE 8989-8999 9000
+
+# Run startup script to launch ttyd and Tiny File Manager
 CMD ["/bin/bash", "/start.sh"]
