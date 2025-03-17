@@ -22,8 +22,9 @@ RUN apt-get update && apt-get install -y \
     php-common \
     php-curl \
     php-zip \
+    php-mbstring \
     libzip-dev \
-    oniguruma-dev \
+    libonig-dev \
     screen \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
