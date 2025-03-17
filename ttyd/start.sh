@@ -22,12 +22,19 @@ if [ "${#USER_LIST[@]}" -ne "${#PASS_LIST[@]}" ]; then
     exit 1
 fi
 
-# Prepare Tiny File Manager config
+# Path to Tiny File Manager config
 CONFIG_PATH="/opt/tinyfilemanager/config.php"
-echo "<?php" > "$CONFIG_PATH"
-echo "\$use_auth = true;" >> "$CONFIG_PATH"
-echo "\$auth_users = array();" >> "$CONFIG_PATH"
-echo "\$directories_users = array();" >> "$CONFIG_PATH"
+
+# Create config.php only if it doesn't exist
+if [ ! -f "$CONFIG_PATH" ]; then
+    echo "Creating Tiny File Manager config.php..."
+    echo "<?php" > "$CONFIG_PATH"
+    echo "\$use_auth = true;" >> "$CONFIG_PATH"
+    echo "\$auth_users = array();" >> "$CONFIG_PATH"
+    echo "\$directories_users = array();" >> "$CONFIG_PATH"
+else
+    echo "Tiny File Manager config.php already exists. Skipping creation..."
+fi
 
 for i in "${!USER_LIST[@]}"; do
     USER="${USER_LIST[$i]}"
@@ -46,9 +53,14 @@ for i in "${!USER_LIST[@]}"; do
     mkdir -p "/opt/tinyfilemanager/$USER_FOLDER"
     chown -R "$USER:$USER" "/opt/tinyfilemanager/$USER_FOLDER"
 
-    # Append user authentication & directory path to config.php
-    echo "\$auth_users['$USER'] = '$HASHED_PASS';" >> "$CONFIG_PATH"
-    echo "\$directories_users['$USER'] = '$USER_FOLDER';" >> "$CONFIG_PATH"
+    # Append user authentication & directory path to config.php if not already present
+    if ! grep -q "'$USER'" "$CONFIG_PATH"; then
+        echo "Adding $USER to config.php..."
+        echo "\$auth_users['$USER'] = '$HASHED_PASS';" >> "$CONFIG_PATH"
+        echo "\$directories_users['$USER'] = '$USER_FOLDER';" >> "$CONFIG_PATH"
+    else
+        echo "$USER already exists in config.php. Skipping..."
+    fi
 
     # Grant sudo to first user only
     if [ "$i" -eq 0 ]; then
@@ -58,7 +70,7 @@ for i in "${!USER_LIST[@]}"; do
     fi
 done
 
-echo "?>" >> "$CONFIG_PATH"
+# echo "?>" >> "$CONFIG_PATH"
 
 # Start Tiny File Manager (Single instance for all users)
 echo "Starting Tiny File Manager on port 9000..."
