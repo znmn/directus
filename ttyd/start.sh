@@ -22,8 +22,12 @@ if [ "${#USER_LIST[@]}" -ne "${#PASS_LIST[@]}" ]; then
     exit 1
 fi
 
-# Assign ports dynamically starting from START_PORT
-PORT=$START_PORT
+# Prepare Tiny File Manager config
+CONFIG_PATH="/opt/tinyfilemanager/config.php"
+echo "<?php" > "$CONFIG_PATH"
+echo "\$use_auth = true;" >> "$CONFIG_PATH"
+echo "\$auth_users = array();" >> "$CONFIG_PATH"
+echo "\$directories_users = array();" >> "$CONFIG_PATH"
 
 for i in "${!USER_LIST[@]}"; do
     USER="${USER_LIST[$i]}"
@@ -34,17 +38,31 @@ for i in "${!USER_LIST[@]}"; do
     useradd -m -s /bin/bash "$USER"
     echo "$USER:$PASS" | chpasswd
 
+    # Hash the password for Tiny File Manager authentication
+    HASHED_PASS=$(php -r "echo password_hash('$PASS', PASSWORD_DEFAULT);")
+
+    # Assign a role-based directory
+    USER_FOLDER="root/${USER}-folder"
+    mkdir -p "/opt/tinyfilemanager/$USER_FOLDER"
+    chown -R "$USER:$USER" "/opt/tinyfilemanager/$USER_FOLDER"
+
+    # Append user authentication & directory path to config.php
+    echo "\$auth_users['$USER'] = '$HASHED_PASS';" >> "$CONFIG_PATH"
+    echo "\$directories_users['$USER'] = '$USER_FOLDER';" >> "$CONFIG_PATH"
+
+    # Grant sudo to first user only
     if [ "$i" -eq 0 ]; then
         echo "Granting sudo privileges to $USER"
         usermod -aG sudo "$USER"
         echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     fi
-
-    echo "Starting ttyd for $USER on port $PORT in $HOME_DIR..."
-    su -c "ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -w \"$HOME_DIR\" -W bash -l" "$USER" &
-
-    ((PORT++))
 done
+
+echo "?>" >> "$CONFIG_PATH"
+
+# Start Tiny File Manager (Single instance for all users)
+echo "Starting Tiny File Manager on port 9000..."
+php -S 0.0.0.0:9000 -t /opt/tinyfilemanager &
 
 # Keep the container running
 tail -f /dev/null
