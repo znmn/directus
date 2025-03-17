@@ -30,7 +30,7 @@ if [ ! -f "$CONFIG_PATH" ]; then
     echo "Creating Tiny File Manager config.php..."
     echo "<?php" > "$CONFIG_PATH"
     echo "\$use_auth = true;" >> "$CONFIG_PATH"
-    echo "\$root_url = 'manager';" >> "$CONFIG_PATH"
+    # echo "\$root_url = 'manager';" >> "$CONFIG_PATH"
     echo "\$auth_users = array();" >> "$CONFIG_PATH"
     echo "\$directories_users = array();" >> "$CONFIG_PATH"
 else
