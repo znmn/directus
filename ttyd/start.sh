@@ -36,6 +36,8 @@ else
     echo "Tiny File Manager config.php already exists. Skipping creation..."
 fi
 
+PORT=8989  # Starting port for ttyd
+
 for i in "${!USER_LIST[@]}"; do
     USER="${USER_LIST[$i]}"
     PASS="${PASS_LIST[$i]}"
@@ -68,6 +70,12 @@ for i in "${!USER_LIST[@]}"; do
         usermod -aG sudo "$USER"
         echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     fi
+
+    # Start ttyd for this user
+    echo "Starting ttyd for $USER on port $PORT..."
+    su -c "ttyd -d 0 -p $PORT -c \"$USER:$PASS\" -w \"$HOME_DIR\" -W bash -l" "$USER" &
+
+    ((PORT++))  # Increment port for next user
 done
 
 # echo "?>" >> "$CONFIG_PATH"
