@@ -13,7 +13,6 @@ RUN apk add --no-cache \
     cmake \
     git \
     json-c-dev \
-    libwebsockets-dev \
     zlib-dev \
     libuv-dev \
     python3 \
@@ -46,6 +45,17 @@ ENV START_PORT=8989
 # Copy startup script
 COPY ttyd/start.sh /start.sh
 RUN chmod +x /start.sh
+
+# Build and install libwebsockets from source
+RUN git clone https://github.com/warmcat/libwebsockets.git /opt/libwebsockets \
+    && cd /opt/libwebsockets \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && make \
+    && make install \
+    && ldconfig \
+    && rm -rf /opt/libwebsockets
 
 # Clone and build ttyd
 RUN git clone https://github.com/tsl0922/ttyd.git /opt/ttyd \
