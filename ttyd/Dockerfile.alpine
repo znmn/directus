@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     git \
     json-c-dev \
     libwebsockets-dev \
+    zlib-dev \
     python3 \
     py3-pip \
     php \
