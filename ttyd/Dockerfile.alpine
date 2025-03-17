@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     git \
     json-c-dev \
     zlib-dev \
+    openssl-dev \
     libuv-dev \
     python3 \
     py3-pip \
