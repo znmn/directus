@@ -51,16 +51,11 @@ for i in "${!USER_LIST[@]}"; do
     # Hash the password for Tiny File Manager authentication
     HASHED_PASS=$(php -r "echo password_hash('$PASS', PASSWORD_DEFAULT);")
 
-    # Assign a role-based directory
-    USER_FOLDER="root/${USER}-folder"
-    mkdir -p "/opt/tinyfilemanager/$USER_FOLDER"
-    chown -R "$USER:$USER" "/opt/tinyfilemanager/$USER_FOLDER"
-
     # Append user authentication & directory path to config.php if not already present
     if ! grep -q "'$USER'" "$CONFIG_PATH"; then
         echo "Adding $USER to config.php..."
         echo "\$auth_users['$USER'] = '$HASHED_PASS';" >> "$CONFIG_PATH"
-        echo "\$directories_users['$USER'] = '$USER_FOLDER';" >> "$CONFIG_PATH"
+        echo "\$directories_users['$USER'] = '$HOME_DIR';" >> "$CONFIG_PATH"
     else
         echo "$USER already exists in config.php. Skipping..."
     fi
