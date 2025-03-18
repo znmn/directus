@@ -24,6 +24,7 @@ fi
 
 # Path to Tiny File Manager config
 CONFIG_PATH="/opt/tinyfilemanager/config.php"
+INDEX_PATH="/opt/tinyfilemanager/index.php"
 
 # Create config.php only if it doesn't exist
 if [ ! -f "$CONFIG_PATH" ]; then
@@ -75,6 +76,16 @@ for i in "${!USER_LIST[@]}"; do
 done
 
 # echo "?>" >> "$CONFIG_PATH"
+
+# Create index.php only if it doesn't exist
+if [ ! -f "$INDEX_PATH" ]; then
+    echo "Creating index.php to redirect to Tiny File Manager..."
+    echo "<?php" > "$INDEX_PATH"
+    echo "header(\"Location: tinyfilemanager.php\");" >> "$INDEX_PATH"
+    echo "exit();" >> "$INDEX_PATH"
+else
+    echo "index.php already exists. Skipping creation..."
+fi
 
 # Start Tiny File Manager (Single instance for all users)
 echo "Starting Tiny File Manager on port 9000..."
