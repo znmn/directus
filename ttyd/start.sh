@@ -12,6 +12,11 @@ else
     echo "Swap already enabled."
 fi
 
+# Create common group if not exists
+if ! grep -q '^webgroup:' /etc/group; then
+    groupadd webgroup
+fi
+
 # Read users and passwords from ENV
 IFS=',' read -ra USER_LIST <<< "$USERS"
 IFS=',' read -ra PASS_LIST <<< "$PASSWORDS"
@@ -38,16 +43,24 @@ else
     echo "Tiny File Manager config.php already exists. Skipping creation..."
 fi
 
-PORT=8989  # Starting port for ttyd
+PORT=$START_PORT  # Starting port for ttyd
 
 for i in "${!USER_LIST[@]}"; do
     USER="${USER_LIST[$i]}"
     PASS="${PASS_LIST[$i]}"
     HOME_DIR="/home/$USER"
 
-    echo "Creating user: $USER with home directory: $HOME_DIR"
-    useradd -m -s /bin/bash "$USER"
+    # echo "Creating user: $USER with home directory: $HOME_DIR"
+    # useradd -m -s /bin/bash "$USER"
+    # echo "$USER:$PASS" | chpasswd
+    
+    # Create user with home directory and add to webgroup
+    useradd -m -s /bin/bash -G webgroup "$USER"
     echo "$USER:$PASS" | chpasswd
+
+    # Set home directory permissions
+    chown "$USER:webgroup" "$HOME_DIR"
+    chmod 2775 "$HOME_DIR"
 
     # Hash the password for Tiny File Manager authentication
     HASHED_PASS=$(php -r "echo password_hash('$PASS', PASSWORD_DEFAULT);")
@@ -80,9 +93,7 @@ done
 # Create index.php only if it doesn't exist
 if [ ! -f "$INDEX_PATH" ]; then
     echo "Creating index.php to redirect to Tiny File Manager..."
-    echo "<?php" > "$INDEX_PATH"
-    echo "header(\"Location: tinyfilemanager.php\");" >> "$INDEX_PATH"
-    echo "exit();" >> "$INDEX_PATH"
+    echo "<?php header('Location: tinyfilemanager.php'); exit();" > "$INDEX_PATH"
 else
     echo "index.php already exists. Skipping creation..."
 fi
