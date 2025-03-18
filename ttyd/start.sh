@@ -100,7 +100,7 @@ fi
 
 # Start Tiny File Manager (Single instance for all users)
 echo "Starting Tiny File Manager on port 9000..."
-php -S 0.0.0.0:9000 -t /opt/tinyfilemanager > /dev/null 2>&1 &
+(umask 0002 && php -S 0.0.0.0:9000 -t /opt/tinyfilemanager > /dev/null 2>&1) &
 
 # Keep the container running
 tail -f /dev/null
