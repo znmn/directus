@@ -37,6 +37,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && npm install -g pnpm
     
 # Clone Tiny File Manager and rename the main script
+RUN git clone https://github.com/prasathmani/tinyfilemanager.git /opt/tinyfilemanager
 # RUN git clone https://github.com/prasathmani/tinyfilemanager.git /opt/tinyfilemanager \
 #     && mv /opt/tinyfilemanager/tinyfilemanager.php /opt/tinyfilemanager/index.php
     
