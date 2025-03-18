@@ -37,8 +37,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - \
     && npm install -g pnpm
     
 # Clone Tiny File Manager and rename the main script
-RUN git clone https://github.com/prasathmani/tinyfilemanager.git /opt/tinyfilemanager \
-    && mv /opt/tinyfilemanager/tinyfilemanager.php /opt/tinyfilemanager/index.php
+# RUN git clone https://github.com/prasathmani/tinyfilemanager.git /opt/tinyfilemanager \
+#     && mv /opt/tinyfilemanager/tinyfilemanager.php /opt/tinyfilemanager/index.php
     
 # Define users and passwords dynamically
 ENV USERS="zain,user1,user2,user3,user4"
