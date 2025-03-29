@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libonig-dev \
     screen \
+    unzip \
     tzdata \
     && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
