@@ -31,7 +31,7 @@ fi' > /etc/services.d/cron/run && \
     chmod +x /etc/services.d/cron/run
 
 # Add startup script
-COPY start.sh /start.sh
+COPY c9/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # USER abc
