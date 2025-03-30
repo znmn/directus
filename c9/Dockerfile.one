@@ -12,17 +12,28 @@ RUN apt-get update && \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Create ping_host.sh as root
+# Configure ping host
 RUN echo -e '#!/bin/sh\n\
 [ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
     chmod +x /usr/local/bin/ping_host.sh
 
-# Copy custom startup script
-COPY c9/start.sh /start.sh
+# Configure s6 cron service
+RUN mkdir -p /etc/services.d/cron && \
+    echo -e '#!/bin/sh\n\
+if [ -n "$HOST" ]; then\n\
+    echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
+    chmod 0644 /etc/cron.d/ping-host\n\
+    exec cron -f\n\
+else\n\
+    printf "HOST not set - disabling cron\\n"\n\
+    exec sleep infinity\n\
+fi' > /etc/services.d/cron/run && \
+    chmod +x /etc/services.d/cron/run
+
+# Add startup script
+COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Switch to non-root user
 # USER abc
 
-# Set entrypoint
 CMD ["/start.sh"]
