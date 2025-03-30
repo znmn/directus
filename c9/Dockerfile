@@ -1,7 +1,7 @@
 ARG COMPOSE_VERSION="1.29.2"
 
 # docker compose
-FROM ghcr.io/linuxserver/docker-compose:amd64-version-${COMPOSE_VERSION} as compose
+FROM ghcr.io/linuxserver/docker-compose:amd64-version-${COMPOSE_VERSION} AS compose
 
 # runtime stage
 FROM ghcr.io/linuxserver/baseimage-cloud9:latest
@@ -47,9 +47,10 @@ if [ -n "$HOST" ]; then\n\
 fi' > /usr/local/bin/ping_host.sh && \
 chmod +x /usr/local/bin/ping_host.sh
 
-# Set up runit service for cron that conditionally runs based on HOST env variable
+# Set up runit service for cron conditionally based on HOST
 RUN mkdir -p /etc/service/cron && \
-echo '#!/bin/bash
+    cat <<'EOF' > /etc/service/cron/run
+#!/bin/bash
 if [ -n "$HOST" ]; then
   echo "HOST set, configuring cron job..."
   echo "*/15 * * * * root /usr/local/bin/ping_host.sh >> /var/log/cron.log 2>&1" > /etc/cron.d/ping-host
@@ -60,5 +61,6 @@ if [ -n "$HOST" ]; then
 else
   echo "HOST not set, skipping cron service."
   exec sleep infinity
-fi' > /etc/service/cron/run && \
-chmod +x /etc/service/cron/run
+fi
+EOF
+RUN chmod +x /etc/service/cron/run
