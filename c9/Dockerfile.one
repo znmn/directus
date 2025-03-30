@@ -26,43 +26,25 @@ RUN \
     python3 \
     nodejs \
     php-cli \
-    cron && \
+    cron \
+    sudo && \
+  echo "**** Configure passwordless sudo for abc ****" && \
+  echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
   echo "**** Cleanup ****" && \
   apt-get autoclean && \
   rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
+# Copy start script and set permissions
+COPY c9/start.sh /start.sh
+RUN chmod +x /start.sh
+
 USER abc
 
-# Add swap file of 2GB
-RUN \
-  echo "**** adding 2GB swap ****" && \
-  fallocate -l 2G /swapfile && \
-  chmod 600 /swapfile && \
-  mkswap /swapfile && \
-  swapon /swapfile && \
-  echo '/swapfile none swap sw 0 0' >> /etc/fstab
-
-# Add a script that pings the host if the HOST env variable is set
-RUN echo '#!/bin/bash\n\
+# Create ping_host.sh
+RUN echo -e '#!/bin/bash\n\
 if [ -n "$HOST" ]; then\n\
   curl "$HOST"\n\
 fi' > /usr/local/bin/ping_host.sh && \
-chmod +x /usr/local/bin/ping_host.sh
+  chmod +x /usr/local/bin/ping_host.sh
 
-# Set up runit service for cron conditionally based on HOST
-RUN mkdir -p /etc/service/cron && \
-    cat <<'EOF' > /etc/service/cron/run
-#!/bin/bash
-if [ -n "$HOST" ]; then
-  echo "HOST set, configuring cron job..."
-  echo "*/15 * * * * root /usr/local/bin/ping_host.sh >> /var/log/cron.log 2>&1" > /etc/cron.d/ping-host
-  chmod 0644 /etc/cron.d/ping-host
-  crontab /etc/cron.d/ping-host
-  echo "HOST set, starting cron..."
-  exec cron -f
-else
-  echo "HOST not set, skipping cron service."
-  exec sleep infinity
-fi
-EOF
-RUN chmod +x /etc/service/cron/run
+CMD ["/start.sh"]
