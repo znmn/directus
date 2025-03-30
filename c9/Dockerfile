@@ -37,7 +37,8 @@ RUN useradd -m -s /bin/bash "$USERNAME" && \
 
 # Clone Cloud9 Core repository and install its dependencies
 RUN git clone https://github.com/c9/core.git /c9sdk && \
-    cd /c9sdk && npm install
+    cd /c9sdk && npm install && \
+    chown -R $USERNAME:$USERNAME /c9sdk
 
 # Expose the specified port (default 8000)
 EXPOSE ${PORT}
