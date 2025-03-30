@@ -9,44 +9,40 @@ RUN apt-get update && \
     php-cli \
     sudo \
     nano \
+    dos2unix \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Create ping_host.sh with proper shebang
-RUN echo -e '#!/bin/sh\n\
-[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
-    chmod 755 /usr/local/bin/ping_host.sh
+# Create scripts directory
+RUN mkdir -p /etc/services.d/cron /usr/local/bin
 
-# Proper s6 cron service setup
-RUN mkdir -p /etc/services.d/cron && \
-    echo -e '#!/bin/sh\n\
+# ping_host.sh with UNIX line endings
+RUN printf '#!/bin/sh\n\
+[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
+    chmod 755 /usr/local/bin/ping_host.sh && \
+    dos2unix /usr/local/bin/ping_host.sh
+
+# cron service with proper s6 format
+RUN printf '#!/bin/sh\n\
 if [ -n "$HOST" ]; then\n\
     echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
     chmod 0644 /etc/cron.d/ping-host\n\
-    exec cron -f\n\
+    exec cron -f -L /dev/stdout\n\
 else\n\
-    echo "HOST not set, skipping cron"\n\
+    printf "Cron: HOST not set\\n"\n\
     exec sleep infinity\n\
-fi' > /etc/services.d/cron/run && \
-    chmod 755 /etc/services.d/cron/run
+fi\n' > /etc/services.d/cron/run && \
+    chmod 755 /etc/services.d/cron/run && \
+    dos2unix /etc/services.d/cron/run
 
-# Cloud9 swap setup script
-RUN echo -e '#!/bin/sh\n\
-if [ ! -f /workspace/.swapfile ]; then\n\
-    dd if=/dev/zero of=/workspace/.swapfile bs=1M count=2048\n\
-    chmod 600 /workspace/.swapfile\n\
-    mkswap /workspace/.swapfile\n\
-fi\n\
-swapon /workspace/.swapfile || true\n\
-echo "/workspace/.swapfile none swap sw 0 0" >> /etc/fstab' > /usr/local/bin/setup_swap && \
-    chmod 755 /usr/local/bin/setup_swap
-
-# Main entrypoint
-RUN echo -e '#!/bin/sh\n\
-/usr/local/bin/setup_swap\n\
-exec /init' > /start.sh && \
-    chmod 755 /start.sh
-
-# USER abc
-
-CMD ["/start.sh"]
+# swap initialization in cont-init.d
+RUN mkdir -p /etc/cont-init.d && \
+    printf '#!/bin/sh\n\
+if [ ! -f /swapfile ]; then\n\
+    dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
+    chmod 600 /swapfile\n\
+    mkswap /swapfile\nfi\n\
+swapon /swapfile || true\n\
+echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' > /etc/cont-init.d/10-swap && \
+    chmod 755 /etc/cont-init.d/10-swap && \
+    dos2unix /etc/cont-init.d/10-swap
