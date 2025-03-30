@@ -1,20 +1,22 @@
 #!/bin/bash
 
-# Create swapfile with sudo
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
+# Create swap if not exists
+if [ ! -f /swapfile ]; then
+    sudo fallocate -l 2G /swapfile
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+fi
+
+# Enable swap
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
-# Configure cron if HOST is set
+# Configure cron if HOST exists
 if [ -n "$HOST" ]; then
-  echo "**** HOST set, configuring cron ****"
-  echo "*/15 * * * * root /usr/local/bin/ping_host.sh >> /var/log/cron.log 2>&1" | sudo tee /etc/cron.d/ping-host
-  sudo chmod 0644 /etc/cron.d/ping-host
-  sudo crontab /etc/cron.d/ping-host
-  sudo cron
+    echo "*/15 * * * * /usr/local/bin/ping_host.sh" | sudo tee /etc/cron.d/ping-host
+    sudo chmod 0644 /etc/cron.d/ping-host
+    sudo crontab /etc/cron.d/ping-host
 fi
 
-# Execute the original command (from base image)
+# Start original cloud9 process
 exec /init
