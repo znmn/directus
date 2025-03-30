@@ -31,7 +31,7 @@ exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
 # Set a default environment variable for HOST (can be overridden at runtime)
 ENV HOST=http://example.com
 
-# Create cont-init.d scripts for swap initialization and always create cron file
+# Create cont-init.d scripts for swap initialization and updating abc user's cron
 RUN mkdir -p /etc/cont-init.d && \
     printf '#!/bin/sh\n\
 if [ ! -f /swapfile ]; then\n\
@@ -44,9 +44,9 @@ grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap s
     chmod 755 /etc/cont-init.d/10-swap && \
     dos2unix /etc/cont-init.d/10-swap && \
     printf '#!/bin/sh\n\
-echo "Creating cron file for pinger."\n\
-echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
-chmod 0644 /etc/cron.d/ping-host\n\
-echo "Cron file /etc/cron.d/ping-host created."\n' > /etc/cont-init.d/20-create-cron && \
+echo "Creating abc user cron file for pinger."\n\
+(crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\
+echo "abc user cron file updated:"\n\
+crontab -u abc -l\n' > /etc/cont-init.d/20-create-cron && \
     chmod 755 /etc/cont-init.d/20-create-cron && \
     dos2unix /etc/cont-init.d/20-create-cron
