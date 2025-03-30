@@ -1,59 +1,39 @@
-# Use official cloud9 image
 FROM linuxserver/cloud9:latest
 
-# Set version label
-ARG BUILD_DATE
-ARG VERSION
-LABEL build_version="Custom version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="your-name"
-
-# Install additional packages
-RUN \
-  echo "**** install packages ****" && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends \
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     screen \
     python3 \
     nodejs \
     php-cli \
-    cron \
-    sudo && \
-  echo "**** Configure sudo ****" && \
-  echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
-  echo "**** Cleanup ****" && \
-  apt-get autoclean && \
-  rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+    sudo \
+    cron && \
+    echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Create ping_host.sh as root
-RUN echo -e '#!/bin/sh\n\
-if [ -n "$HOST" ]; then\n\
-  curl -fsS "$HOST" >/dev/null\n\
-fi' > /usr/local/bin/ping_host.sh && \
-  chmod +x /usr/local/bin/ping_host.sh
-
-# Add initialization scripts
+# Add swap initialization
 RUN mkdir -p /etc/cont-init.d && \
-  echo -e '#!/bin/sh\n\
-# Create swap\n\
-if [ ! -f /swapfile ]; then\n\
-  fallocate -l 2G /swapfile && \
-  chmod 600 /swapfile && \
-  mkswap /swapfile && \
-  swapon /swapfile && \
-  echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\
-fi\n\
-\n\
-# Configure cron if HOST exists\n\
-if [ -n "$HOST" ]; then\n\
-  echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host && \
-  chmod 0644 /etc/cron.d/ping-host\n\
-fi\n\
-\n\
-# Start cron\n\
-cron' > /etc/cont-init.d/01-custom && \
-  chmod +x /etc/cont-init.d/01-custom
+    echo -e '#!/bin/bash\n\
+    if [ ! -f /swapfile ]; then\n\
+        fallocate -l 2G /swapfile && \
+        chmod 600 /swapfile && \
+        mkswap /swapfile\n\
+    fi\n\
+    swapon /swapfile\n\
+    echo "/swapfile none swap sw 0 0" >> /etc/fstab' > /etc/cont-init.d/10-swap && \
+    chmod +x /etc/cont-init.d/10-swap
 
-# Set user
+# Ping host configuration
+RUN echo -e '#!/bin/sh\n\
+    [ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
+    chmod +x /usr/local/bin/ping_host.sh && \
+    mkdir -p /etc/services.d/cron && \
+    echo -e '#!/bin/sh\n\
+    if [ -n "$HOST" ]; then\n\
+        echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
+        chmod 0644 /etc/cron.d/ping-host\n\
+    fi\n\
+    exec cron -f' > /etc/services.d/cron/run && \
+    chmod +x /etc/services.d/cron/run
+
 # USER abc
-
-# Volumes and ports (inherited from base image)
