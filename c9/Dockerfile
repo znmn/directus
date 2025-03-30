@@ -15,6 +15,15 @@ LABEL maintainer="thelamer"
 # Docker compose
 COPY --from=compose /usr/local/bin/docker-compose /usr/local/bin/docker-compose
 
+# Add swap file of 2GB
+RUN \
+  echo "**** adding 2GB swap ****" && \
+  fallocate -l 2G /swapfile && \
+  chmod 600 /swapfile && \
+  mkswap /swapfile && \
+  swapon /swapfile && \
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  
 RUN \
   echo "**** install docker deps and additional packages ****" && \
   curl -s https://download.docker.com/linux/debian/gpg | apt-key add - && \
@@ -30,15 +39,6 @@ RUN \
   echo "**** Cleanup ****" && \
   apt-get autoclean && \
   rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
-
-# Add swap file of 2GB
-RUN \
-  echo "**** adding 2GB swap ****" && \
-  fallocate -l 2G /swapfile && \
-  chmod 600 /swapfile && \
-  mkswap /swapfile && \
-  swapon /swapfile && \
-  echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 # Add a script that pings the host if the HOST env variable is set
 RUN echo '#!/bin/bash\n\
