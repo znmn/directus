@@ -35,8 +35,9 @@ RUN useradd -m -s /bin/bash "$USERNAME" && \
     usermod -aG sudo "$USERNAME" && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Install Cloud9 SDK globally via npm
-RUN npm install -g c9
+# Clone Cloud9 Core repository and install its dependencies
+RUN git clone https://github.com/c9/core.git /c9sdk && \
+    cd /c9sdk && npm install
 
 # Expose the specified port (default 8000)
 EXPOSE ${PORT}
