@@ -12,53 +12,41 @@ RUN apt-get update && \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Create a script to set up swap inside the Cloud9 workspace
-RUN echo -e '#!/bin/bash\n\
-# Only create swap if not already present\n\
+# Create ping_host.sh with proper shebang
+RUN echo -e '#!/bin/sh\n\
+[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
+    chmod 755 /usr/local/bin/ping_host.sh
+
+# Proper s6 cron service setup
+RUN mkdir -p /etc/services.d/cron && \
+    echo -e '#!/bin/sh\n\
+if [ -n "$HOST" ]; then\n\
+    echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
+    chmod 0644 /etc/cron.d/ping-host\n\
+    exec cron -f\n\
+else\n\
+    echo "HOST not set, skipping cron"\n\
+    exec sleep infinity\n\
+fi' > /etc/services.d/cron/run && \
+    chmod 755 /etc/services.d/cron/run
+
+# Cloud9 swap setup script
+RUN echo -e '#!/bin/sh\n\
 if [ ! -f /workspace/.swapfile ]; then\n\
-    echo "Creating 2GB swapfile in /workspace..."\n\
     dd if=/dev/zero of=/workspace/.swapfile bs=1M count=2048\n\
     chmod 600 /workspace/.swapfile\n\
     mkswap /workspace/.swapfile\n\
 fi\n\
-# Activate swap inside the workspace\n\
-echo "Enabling swap in Cloud9..."\n\
-sudo swapon /workspace/.swapfile || echo "Swap activation failed (may need manual setup)"\n\
-# Add to fstab for persistence (optional)\n\
-echo "/workspace/.swapfile none swap sw 0 0" | sudo tee -a /etc/fstab\n\
-' > /usr/local/bin/setup-c9-swap && \
-    chmod +x /usr/local/bin/setup-c9-swap
+swapon /workspace/.swapfile || true\n\
+echo "/workspace/.swapfile none swap sw 0 0" >> /etc/fstab' > /usr/local/bin/setup_swap && \
+    chmod 755 /usr/local/bin/setup_swap
 
-# Configure cron (optional, for HOST ping)
+# Main entrypoint
 RUN echo -e '#!/bin/sh\n\
-if [ -n "$HOST" ]; then\n\
-    curl -fsS "$HOST" >/dev/null\n\
-fi' > /usr/local/bin/ping_host.sh && \
-    chmod +x /usr/local/bin/ping_host.sh
+/usr/local/bin/setup_swap\n\
+exec /init' > /start.sh && \
+    chmod 755 /start.sh
 
-# Set up cron service (if needed)
-RUN mkdir -p /etc/services.d/cron && \
-    echo -e '#!/bin/execlineb -P\n\
-if { [ -n "${HOST}" ] }\n\
-foreground { echo "Initializing cron service" }\n\
-foreground { echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host }\n\
-foreground { chmod 0644 /etc/cron.d/ping-host }\n\
-cron -f\n\
-if\n\
-foreground { echo "Cron disabled: HOST not set" }\n\
-sleep infinity' > /etc/services.d/cron/run && \
-    chmod +x /etc/services.d/cron/run
-
-# Run swap setup when Cloud9 starts
-RUN echo -e '#!/bin/bash\n\
-# Start the main Cloud9 process\n\
-exec /init & \n\
-# Wait for Cloud9 to initialize\n\
-sleep 5\n\
-# Set up swap inside the workspace\n\
-/usr/local/bin/setup-c9-swap\n\
-wait' > /start.sh && \
-    chmod +x /start.sh
-
+# USER abc
 
 CMD ["/start.sh"]
