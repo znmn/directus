@@ -2,14 +2,17 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Environment variables
-ENV TZ=Asia/Jakarta
-ENV USERNAME=user
-ENV PASSWORD=password
-ENV PORT=8000
+ENV TZ=Asia/Jakarta \
+    USERNAME=user \
+    PASSWORD=password \
+    PORT=8000 \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
 
-# Install base dependencies with SSL certificates
+# Install base dependencies with locale configuration
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    locales \
     tzdata \
     sudo \
     git \
@@ -23,7 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3-dev \
     libsqlite3-dev \
     libffi-dev \
-    && update-ca-certificates --fresh \
+    libevent-dev \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python 2.7 from source
@@ -52,10 +57,10 @@ RUN useradd -m -s /bin/bash "$USERNAME" \
     && usermod -aG sudo "$USERNAME" \
     && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Clone and setup Cloud9 SDK
+# Clone and setup Cloud9 SDK with locale settings
 RUN git clone https://github.com/c9/core.git /c9sdk \
     && cd /c9sdk \
-    && scripts/install-sdk.sh \
+    && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 scripts/install-sdk.sh \
     && chown -R $USERNAME:$USERNAME /c9sdk
 
 # Install remaining dependencies
