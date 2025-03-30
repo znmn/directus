@@ -12,4 +12,5 @@ cd /c9sdk
 
 # Start the Cloud9 Core server with basic authentication using long options:
 # --listen to bind to all interfaces, --port and --auth for port and credentials.
+echo "run ${USERNAME}:${PASSWORD} on ${PORT}"
 exec node server.js --listen 0.0.0.0 --port ${PORT} --auth ${USERNAME}:${PASSWORD}
