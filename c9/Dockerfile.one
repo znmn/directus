@@ -13,33 +13,37 @@ RUN apt-get update && \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# File environment untuk cron
-RUN mkdir -p /etc/container_environment && \
-    touch /etc/container_environment/HOST
+# Create scripts directory
+RUN mkdir -p /etc/services.d/cron /usr/local/bin
 
-# Script ping_host.sh
+# Create ping_host.sh with UNIX line endings
 RUN printf '#!/bin/sh\n\
 [ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
     chmod 755 /usr/local/bin/ping_host.sh && \
     dos2unix /usr/local/bin/ping_host.sh
 
-# Service cron dengan env yang benar
-RUN mkdir -p /etc/services.d/cron && \
-    printf '#!/bin/sh\n\
-. /etc/container_environment\n\
-if [ -n "$HOST" ]; then\n\
-    echo "*/15 * * * * abc . /etc/container_environment && /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
-    chmod 0644 /etc/cron.d/ping-host\n\
-    exec cron -f\n\
-else\n\
-    echo "HOST not set, cron disabled"\n\
-    exec sleep infinity\n\
-fi\n' > /etc/services.d/cron/run && \
+# Create cron service run script (now just starting cron)
+RUN printf '#!/bin/sh\n\
+exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
     chmod 755 /etc/services.d/cron/run && \
     dos2unix /etc/services.d/cron/run
 
-# Script untuk menyimpan environment variable
-RUN printf '#!/bin/sh\n\
-printenv | grep -v "no_proxy" > /etc/container_environment\n\
-exec /init\n' > /etc/cont-init.d/01-store-env && \
-    chmod 755 /etc/cont-init.d/01-store-env
+# Create cont-init.d script to set up swap and cron file
+RUN mkdir -p /etc/cont-init.d && \
+    printf '#!/bin/sh\n\
+if [ ! -f /swapfile ]; then\n\
+    dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
+    chmod 600 /swapfile\n\
+    mkswap /swapfile\n\
+fi\n\
+swapon /swapfile || true\n\
+grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' > /etc/cont-init.d/10-swap && \
+    chmod 755 /etc/cont-init.d/10-swap && \
+    dos2unix /etc/cont-init.d/10-swap && \
+    printf '#!/bin/sh\n\
+if [ -n "$HOST" ]; then\n\
+    echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
+    chmod 0644 /etc/cron.d/ping-host\n\
+fi\n' > /etc/cont-init.d/20-create-cron && \
+    chmod 755 /etc/cont-init.d/20-create-cron && \
+    dos2unix /etc/cont-init.d/20-create-cron
