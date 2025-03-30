@@ -63,11 +63,11 @@ RUN git clone https://github.com/c9/core.git /c9sdk \
     && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 scripts/install-sdk.sh \
     && chown -R $USERNAME:$USERNAME /c9sdk
 
-# Install remaining dependencies
-RUN cd /c9sdk \
-    && npm install --unsafe-perm \
-    && npm install amd-loader \
-    && npm cache clean --force
+# # Install remaining dependencies
+# RUN cd /c9sdk \
+#     && npm install --unsafe-perm \
+#     && npm install amd-loader \
+#     && npm cache clean --force
 
 EXPOSE ${PORT}
 
