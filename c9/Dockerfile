@@ -46,4 +46,6 @@ COPY c9/entry.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Use the entrypoint script to create swap and run Cloud9 SDK
+USER $USERNAME
+COPY . .
 CMD ["/entrypoint.sh"]
