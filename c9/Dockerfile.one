@@ -38,13 +38,14 @@ RUN \
 COPY c9/start.sh /start.sh
 RUN chmod +x /start.sh
 
-USER abc
-
-# Create ping_host.sh
+# Create ping_host.sh AS ROOT before switching user
 RUN echo -e '#!/bin/bash\n\
 if [ -n "$HOST" ]; then\n\
   curl "$HOST"\n\
 fi' > /usr/local/bin/ping_host.sh && \
   chmod +x /usr/local/bin/ping_host.sh
+
+# Now switch to abc user
+USER abc
 
 CMD ["/start.sh"]
