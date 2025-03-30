@@ -16,9 +16,9 @@ RUN apt-get update && \
 # Create scripts directory
 RUN mkdir -p /etc/services.d/cron /usr/local/bin
 
-# Create ping_host.sh with UNIX line endings
+# Create ping_host.sh with UNIX line endings; note the variable is now PING_HOST
 RUN printf '#!/bin/sh\n\
-[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
+[ -n "$PING_HOST" ] && curl -fsS "$PING_HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
     chmod 755 /usr/local/bin/ping_host.sh && \
     dos2unix /usr/local/bin/ping_host.sh
 
@@ -28,9 +28,9 @@ exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
     chmod 755 /etc/services.d/cron/run && \
     dos2unix /etc/services.d/cron/run
 
-# Set a default environment variable for HOST so that it's available at runtime.
-# You can override this at runtime with -e HOST="http://your-host-url" if needed.
-ENV HOST=https://google.com
+# Set a default environment variable for PING_HOST so that it's available at runtime.
+# You can override this at runtime with -e PING_HOST="http://your-host-url" if needed.
+ENV PING_HOST=http://example.com
 
 # Create cont-init.d scripts for swap initialization and cron file creation
 RUN mkdir -p /etc/cont-init.d && \
@@ -46,13 +46,13 @@ grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap s
     chmod 755 /etc/cont-init.d/10-swap && \
     dos2unix /etc/cont-init.d/10-swap && \
     printf '#!/bin/sh\n\
-echo "HOST is: $HOST"\n\
-if [ -n "$HOST" ]; then\n\
+echo "PING_HOST is: $PING_HOST"\n\
+if [ -n "$PING_HOST" ]; then\n\
     echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
     chmod 0644 /etc/cron.d/ping-host\n\
     echo "Cron file /etc/cron.d/ping-host created."\n\
 else\n\
-    echo "No HOST set, not creating cron file."\n\
+    echo "No PING_HOST set, not creating cron file."\n\
 fi\n' \
 > /etc/cont-init.d/20-create-cron && \
     chmod 755 /etc/cont-init.d/20-create-cron && \
