@@ -1,0 +1,64 @@
+ARG COMPOSE_VERSION="1.29.2"
+
+# docker compose
+FROM ghcr.io/linuxserver/docker-compose:amd64-version-${COMPOSE_VERSION} as compose
+
+# runtime stage
+FROM ghcr.io/linuxserver/baseimage-cloud9:latest
+
+# set version label
+ARG BUILD_DATE
+ARG VERSION
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="thelamer"
+
+# Docker compose
+COPY --from=compose /usr/local/bin/docker-compose /usr/local/bin/docker-compose
+
+RUN \
+  echo "**** install docker deps and additional packages ****" && \
+  curl -s https://download.docker.com/linux/debian/gpg | apt-key add - && \
+  echo 'deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable' > /etc/apt/sources.list.d/docker-ce.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+    docker-ce \
+    screen \
+    python3 \
+    nodejs \
+    php-cli \
+    cron && \
+  echo "**** Cleanup ****" && \
+  apt-get autoclean && \
+  rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+# Add swap file of 2GB
+RUN \
+  echo "**** adding 2GB swap ****" && \
+  fallocate -l 2G /swapfile && \
+  chmod 600 /swapfile && \
+  mkswap /swapfile && \
+  swapon /swapfile && \
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+# Add a script that pings the host if the HOST env variable is set
+RUN echo '#!/bin/bash\n\
+if [ -n "$HOST" ]; then\n\
+  curl "$HOST"\n\
+fi' > /usr/local/bin/ping_host.sh && \
+chmod +x /usr/local/bin/ping_host.sh
+
+# Set up runit service for cron that conditionally runs based on HOST env variable
+RUN mkdir -p /etc/service/cron && \
+echo '#!/bin/bash
+if [ -n "$HOST" ]; then
+  echo "HOST set, configuring cron job..."
+  echo "*/15 * * * * root /usr/local/bin/ping_host.sh >> /var/log/cron.log 2>&1" > /etc/cron.d/ping-host
+  chmod 0644 /etc/cron.d/ping-host
+  crontab /etc/cron.d/ping-host
+  echo "HOST set, starting cron..."
+  exec cron -f
+else
+  echo "HOST not set, skipping cron service."
+  exec sleep infinity
+fi' > /etc/service/cron/run && \
+chmod +x /etc/service/cron/run
