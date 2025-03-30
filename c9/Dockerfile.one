@@ -12,28 +12,38 @@ RUN apt-get update && \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Configure ping host
+# Create ping_host.sh
 RUN echo -e '#!/bin/sh\n\
-[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
+if [ -n "$HOST" ]; then\n\
+    curl -fsS "$HOST" >/dev/null\n\
+fi' > /usr/local/bin/ping_host.sh && \
     chmod +x /usr/local/bin/ping_host.sh
 
-# Configure s6 cron service
-RUN mkdir -p /etc/services.d/cron && \
+# Configure swap in cont-init.d
+RUN mkdir -p /etc/cont-init.d && \
     echo -e '#!/bin/sh\n\
-if [ -n "$HOST" ]; then\n\
-    echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
-    chmod 0644 /etc/cron.d/ping-host\n\
-    exec cron -f\n\
-else\n\
-    printf "HOST not set - disabling cron\\n"\n\
-    exec sleep infinity\n\
-fi' > /etc/services.d/cron/run && \
+# Create swap if not exists\n\
+if [ ! -f /swapfile ]; then\n\
+    fallocate -l 2G /swapfile\n\
+    chmod 600 /swapfile\n\
+    mkswap /swapfile\n\
+fi\n\
+swapon /swapfile\n\
+echo "/swapfile none swap sw 0 0" >> /etc/fstab' > /etc/cont-init.d/10-swap && \
+    chmod +x /etc/cont-init.d/10-swap
+
+# Configure cron service properly
+RUN mkdir -p /etc/services.d/cron && \
+    echo -e '#!/bin/execlineb -P\n\
+if { [ -n "$HOST" ] }\n\
+foreground { echo "Configuring cron" }\n\
+foreground { echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host }\n\
+foreground { chmod 0644 /etc/cron.d/ping-host }\n\
+cron -f\n\
+if\n\
+foreground { echo "No HOST set, disabling cron" }\n\
+sleep infinity' > /etc/services.d/cron/run && \
     chmod +x /etc/services.d/cron/run
 
-# Add startup script
-COPY c9/start.sh /start.sh
-RUN chmod +x /start.sh
-
-# USER abc
-
-CMD ["/start.sh"]
+# Fix service permissions
+RUN chmod +x /etc/services.d/*/run
