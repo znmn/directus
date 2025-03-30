@@ -8,32 +8,21 @@ RUN apt-get update && \
     nodejs \
     php-cli \
     sudo \
+    nano \
     cron && \
     echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Add swap initialization
-RUN mkdir -p /etc/cont-init.d && \
-    echo -e '#!/bin/bash\n\
-    if [ ! -f /swapfile ]; then\n\
-        fallocate -l 2G /swapfile && \
-        chmod 600 /swapfile && \
-        mkswap /swapfile\n\
-    fi\n\
-    swapon /swapfile\n\
-    echo "/swapfile none swap sw 0 0" >> /etc/fstab' > /etc/cont-init.d/10-swap && \
-    chmod +x /etc/cont-init.d/10-swap
-
-# Ping host configuration
+# Create ping_host.sh as root
 RUN echo -e '#!/bin/sh\n\
-    [ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
-    chmod +x /usr/local/bin/ping_host.sh && \
-    mkdir -p /etc/services.d/cron && \
-    echo -e '#!/bin/sh\n\
-    if [ -n "$HOST" ]; then\n\
-        echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
-        chmod 0644 /etc/cron.d/ping-host\n\
-    fi\n\
-    exec cron -f' > /etc/services.d/cron/run && \
-    chmod +x /etc/services.d/cron/run
+[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null' > /usr/local/bin/ping_host.sh && \
+    chmod +x /usr/local/bin/ping_host.sh
 
+# Copy custom startup script
+COPY c9/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Switch to non-root user
 # USER abc
+
+# Set entrypoint
+CMD ["/start.sh"]
