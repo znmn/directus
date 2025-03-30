@@ -22,13 +22,17 @@ RUN printf '#!/bin/sh\n\
     chmod 755 /usr/local/bin/ping_host.sh && \
     dos2unix /usr/local/bin/ping_host.sh
 
-# Create cron service run script (now just starting cron)
+# Create cron service run script (just starting cron)
 RUN printf '#!/bin/sh\n\
 exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
     chmod 755 /etc/services.d/cron/run && \
     dos2unix /etc/services.d/cron/run
 
-# Create cont-init.d script to set up swap and cron file
+# Set a default environment variable for HOST so that it's available at runtime.
+# You can override this at runtime with -e HOST="http://your-host-url" if needed.
+ENV HOST=https://google.com
+
+# Create cont-init.d scripts for swap initialization and cron file creation
 RUN mkdir -p /etc/cont-init.d && \
     printf '#!/bin/sh\n\
 if [ ! -f /swapfile ]; then\n\
@@ -37,13 +41,19 @@ if [ ! -f /swapfile ]; then\n\
     mkswap /swapfile\n\
 fi\n\
 swapon /swapfile || true\n\
-grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' > /etc/cont-init.d/10-swap && \
+grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' \
+> /etc/cont-init.d/10-swap && \
     chmod 755 /etc/cont-init.d/10-swap && \
     dos2unix /etc/cont-init.d/10-swap && \
     printf '#!/bin/sh\n\
+echo "HOST is: $HOST"\n\
 if [ -n "$HOST" ]; then\n\
     echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
     chmod 0644 /etc/cron.d/ping-host\n\
-fi\n' > /etc/cont-init.d/20-create-cron && \
+    echo "Cron file /etc/cron.d/ping-host created."\n\
+else\n\
+    echo "No HOST set, not creating cron file."\n\
+fi\n' \
+> /etc/cont-init.d/20-create-cron && \
     chmod 755 /etc/cont-init.d/20-create-cron && \
     dos2unix /etc/cont-init.d/20-create-cron
