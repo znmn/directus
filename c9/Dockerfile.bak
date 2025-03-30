@@ -1,0 +1,48 @@
+FROM linuxserver/cloud9:latest
+
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    screen \
+    python3 \
+    nodejs \
+    php-cli \
+    sudo \
+    nano \
+    dos2unix \
+    cron && \
+    echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create scripts directory
+RUN mkdir -p /etc/services.d/cron /usr/local/bin
+
+# ping_host.sh with UNIX line endings
+RUN printf '#!/bin/sh\n\
+[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
+    chmod 755 /usr/local/bin/ping_host.sh && \
+    dos2unix /usr/local/bin/ping_host.sh
+
+# cron service with proper s6 format
+RUN printf '#!/bin/sh\n\
+if [ -n "$HOST" ]; then\n\
+    echo "*/15 * * * * abc /usr/local/bin/ping_host.sh" > /etc/cron.d/ping-host\n\
+    chmod 0644 /etc/cron.d/ping-host\n\
+    exec cron -f -L /dev/stdout\n\
+else\n\
+    printf "Cron: HOST not set\\n"\n\
+    exec sleep infinity\n\
+fi\n' > /etc/services.d/cron/run && \
+    chmod 755 /etc/services.d/cron/run && \
+    dos2unix /etc/services.d/cron/run
+
+# swap initialization in cont-init.d
+RUN mkdir -p /etc/cont-init.d && \
+    printf '#!/bin/sh\n\
+if [ ! -f /swapfile ]; then\n\
+    dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
+    chmod 600 /swapfile\n\
+    mkswap /swapfile\nfi\n\
+swapon /swapfile || true\n\
+echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' > /etc/cont-init.d/10-swap && \
+    chmod 755 /etc/cont-init.d/10-swap && \
+    dos2unix /etc/cont-init.d/10-swap
