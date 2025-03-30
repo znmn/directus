@@ -54,6 +54,6 @@ cron' > /etc/cont-init.d/01-custom && \
   chmod +x /etc/cont-init.d/01-custom
 
 # Set user
-USER abc
+# USER abc
 
 # Volumes and ports (inherited from base image)
