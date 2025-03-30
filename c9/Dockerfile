@@ -1,53 +1,51 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Set environment variables (defaults provided)
+# Environment variables
 ENV TZ=Asia/Jakarta
 ENV USERNAME=user
 ENV PASSWORD=password
 ENV PORT=8000
 
-# Set timezone using tzdata
-RUN apt-get update && apt-get install -y --no-install-recommends tzdata && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install required packages (including cron) with --no-install-recommends
+# Install base dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     sudo \
-    nano \
     git \
-    php \
     python3 \
     python3-pip \
     curl \
-    cron && \
-    rm -rf /var/lib/apt/lists/*
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (latest) from NodeSource
-RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash - && \
-    apt-get update && apt-get install -y --no-install-recommends nodejs && \
-    rm -rf /var/lib/apt/lists/*
+# Install Node.js 18.x (Cloud9 works best with LTS versions)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a new user and add to sudoers without password prompt
-RUN useradd -m -s /bin/bash "$USERNAME" && \
-    echo "$USERNAME:$PASSWORD" | chpasswd && \
-    usermod -aG sudo "$USERNAME" && \
-    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Create user and set permissions
+RUN useradd -m -s /bin/bash "$USERNAME" \
+    && echo "$USERNAME:$PASSWORD" | chpasswd \
+    && usermod -aG sudo "$USERNAME" \
+    && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Clone Cloud9 Core repository and install its dependencies
-RUN git clone https://github.com/c9/core.git /c9sdk && \
-    cd /c9sdk && npm install && \
-    chown -R $USERNAME:$USERNAME /c9sdk
+# Clone and setup Cloud9 SDK
+RUN git clone https://github.com/c9/core.git /c9sdk \
+    && cd /c9sdk \
+    && scripts/install-sdk.sh \
+    && chown -R $USERNAME:$USERNAME /c9sdk
 
-# Expose the specified port (default 8000)
+# Install required Node modules
+RUN cd /c9sdk \
+    && npm install \
+    && npm install amd-loader \
+    && npm cache clean --force
+
 EXPOSE ${PORT}
 
-# Copy the unified entrypoint shell script and make it executable
 COPY c9/entry.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Use the entrypoint script to create swap and run Cloud9 SDK
 USER $USERNAME
-COPY . .
+WORKDIR /c9sdk
 CMD ["/bin/bash", "/entrypoint.sh"]
