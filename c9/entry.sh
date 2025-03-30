@@ -1,9 +1,15 @@
 #!/bin/bash
+sudo su
+
 # Create and enable a 2GB swap file
 fallocate -l 2G /swapfile
 chmod 600 /swapfile
 mkswap /swapfile
 swapon /swapfile
 
-# Start Cloud9 SDK with basic authentication using the provided environment variables
-exec c9sdk -l 0.0.0.0 --port ${PORT} --auth ${USERNAME}:${PASSWORD}
+# Change directory to the Cloud9 Core repository
+cd /c9sdk
+
+# Start the Cloud9 Core server with basic authentication using long options:
+# --listen to bind to all interfaces, --port and --auth for port and credentials.
+exec node server.js --listen 0.0.0.0 --port ${PORT} --auth ${USERNAME}:${PASSWORD}
