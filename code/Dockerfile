@@ -28,7 +28,8 @@ RUN printf '#!/bin/sh\n\
     dos2unix /usr/local/bin/ping_host.sh
 
 # Create cron service run script (just starting cron)
-RUN printf '#!/bin/sh\n\
+RUN mkdir -p /etc/services.d/cron && \
+    printf '#!/bin/sh\n\
 exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
     chmod 755 /etc/services.d/cron/run && \
     dos2unix /etc/services.d/cron/run
@@ -36,8 +37,8 @@ exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
 # Set a default environment variable for HOST (can be overridden at runtime)
 ENV HOST=http://example.com
 
-# Create cont-init.d scripts for swap initialization and updating abc user's cron
-RUN mkdir -p /etc/cont-init.d && \
+# Use LinuxServer's custom init: add custom scripts in /custom-cont-init.d
+RUN mkdir -p /custom-cont-init.d && \
     printf '#!/bin/sh\n\
 if [ ! -f /swapfile ]; then\n\
     dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
@@ -45,13 +46,15 @@ if [ ! -f /swapfile ]; then\n\
     mkswap /swapfile\n\
 fi\n\
 swapon /swapfile || true\n\
-grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' > /etc/cont-init.d/10-swap && \
-    chmod 755 /etc/cont-init.d/10-swap && \
-    dos2unix /etc/cont-init.d/10-swap && \
+grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n' \
+    > /custom-cont-init.d/10-swap && \
+    chmod 755 /custom-cont-init.d/10-swap && \
+    dos2unix /custom-cont-init.d/10-swap && \
     printf '#!/bin/sh\n\
 echo "Creating abc user cron file for pinger."\n\
 (crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\
 echo "abc user cron file updated:"\n\
-crontab -u abc -l\n' > /etc/cont-init.d/20-create-cron && \
-    chmod 755 /etc/cont-init.d/20-create-cron && \
-    dos2unix /etc/cont-init.d/20-create-cron
+crontab -u abc -l\n' \
+    > /custom-cont-init.d/20-create-cron && \
+    chmod 755 /custom-cont-init.d/20-create-cron && \
+    dos2unix /custom-cont-init.d/20-create-cron
