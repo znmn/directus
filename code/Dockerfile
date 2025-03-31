@@ -1,5 +1,8 @@
 FROM linuxserver/code-server:latest
 
+# Set noninteractive mode for debconf
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install required packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
