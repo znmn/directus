@@ -27,9 +27,10 @@ RUN printf '#!/bin/sh\n\
     chmod 755 /usr/local/bin/ping_host.sh && \
     dos2unix /usr/local/bin/ping_host.sh
 
-# Create cron service run script (just starting cron)
+# Create cron service run script (remove any stale PID file before starting cron)
 RUN mkdir -p /etc/services.d/cron && \
     printf '#!/bin/sh\n\
+rm -f /var/run/crond.pid\n\
 exec cron -f -L /dev/stdout\n' > /etc/services.d/cron/run && \
     chmod 755 /etc/services.d/cron/run && \
     dos2unix /etc/services.d/cron/run
