@@ -1,0 +1,71 @@
+FROM ubuntu:22.04
+
+# Set noninteractive mode for apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install code-server
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://code-server.dev/install.sh | sh
+
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        screen \
+        python3 \
+        php-cli \
+        sudo \
+        nano \
+        dos2unix \
+        cron \
+        ca-certificates && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    corepack enable && \
+    corepack prepare pnpm@latest --activate
+
+# Create abc user and add to sudoers
+RUN useradd -m -s /bin/bash abc && \
+    echo "abc ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create ping_host.sh
+RUN mkdir -p /usr/local/bin && \
+    printf '#!/bin/sh\n[ -n "$HOST" ] && curl -fsS "$HOST" >/dev/null\n' > /usr/local/bin/ping_host.sh && \
+    chmod 755 /usr/local/bin/ping_host.sh && \
+    dos2unix /usr/local/bin/ping_host.sh
+
+# Create entrypoint script
+RUN printf '#!/bin/bash\n\
+# Setup swapfile\n\
+if [ ! -f /swapfile ]; then\n\
+    dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
+    chmod 600 /swapfile\n\
+    mkswap /swapfile\n\
+fi\n\
+swapon /swapfile || true\n\
+grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\n\
+# Setup cron job\n\
+echo "Updating crontab for user abc"\n\
+(crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
+# Start cron service\n\
+service cron start\n\n\
+# Set default password if not provided\n\
+if [ -z "$PASSWORD" ]; then\n\
+    export PASSWORD=password\n\
+    echo "Using default password. Please set PASSWORD environment variable for production use."\n\
+fi\n\n\
+# Run main command\n\
+exec "$@"\n' > /entrypoint.sh && \
+    chmod +x /entrypoint.sh && \
+    dos2unix /entrypoint.sh
+
+# Set default environment variables
+ENV HOST=http://example.com
+ENV PASSWORD=password
+
+# Expose code-server port
+EXPOSE 8080
+
+# Set entrypoint and default command
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password"]
