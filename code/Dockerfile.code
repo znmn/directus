@@ -3,6 +3,10 @@ FROM ubuntu:22.04
 # Set noninteractive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Set default environment variables
+ENV HOST=http://example.com
+ENV PASSWORD=password
+
 # Install code-server
 RUN apt-get update && \
     apt-get install -y curl && \
@@ -59,13 +63,9 @@ exec "$@"\n' > /entrypoint.sh && \
     chmod +x /entrypoint.sh && \
     dos2unix /entrypoint.sh
 
-# Set default environment variables
-ENV HOST=http://example.com
-ENV PASSWORD=password
-
 # Expose code-server port
 EXPOSE 8080
 
-# Set entrypoint and default command
+# Set entrypoint and default command with --no-sleep
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--no-sleep"]
