@@ -47,14 +47,14 @@ if [ ! -f /swapfile ]; then\n\
     sudo mkswap /swapfile\n\
 fi\n\
 sudo swapon /swapfile || true\n\
-sudo grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || sudo echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\n\
+sudo grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab > /dev/null\n\n\
 # Setup cron job\n\
 echo "Updating crontab for user abc"\n\
 (sudo crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
 # Start cron service\n\
 sudo service cron start\n\n\
 # Run main command\n\
-sudo exec "$@"\n' > /entrypoint.sh && \
+exec "$@"\n' > /entrypoint.sh && \
     sudo chmod +x /entrypoint.sh && \
     sudo dos2unix /entrypoint.sh
 
