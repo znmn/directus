@@ -1,4 +1,4 @@
-FROM linuxserver/code-server:latest
+FROM linuxserver/openvscode-server:latest
 
 # Set noninteractive mode for apt to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
