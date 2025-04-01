@@ -42,21 +42,21 @@ RUN mkdir -p /usr/local/bin && \
 RUN printf '#!/bin/bash\n\
 # Setup swapfile\n\
 if [ ! -f /swapfile ]; then\n\
-    dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
-    chmod 600 /swapfile\n\
-    mkswap /swapfile\n\
+    sudo dd if=/dev/zero of=/swapfile bs=1M count=2048\n\
+    sudo chmod 600 /swapfile\n\
+    sudo mkswap /swapfile\n\
 fi\n\
-swapon /swapfile || true\n\
-grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\n\
+sudo swapon /swapfile || true\n\
+sudo grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\n\
 # Setup cron job\n\
 echo "Updating crontab for user abc"\n\
-(crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
+sudo (crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
 # Start cron service\n\
-service cron start\n\n\
+sudo service cron start\n\n\
 # Run main command\n\
-exec "$@"\n' > /entrypoint.sh && \
-    chmod +x /entrypoint.sh && \
-    dos2unix /entrypoint.sh
+sudo exec "$@"\n' > /entrypoint.sh && \
+    sudo chmod +x /entrypoint.sh && \
+    sudo dos2unix /entrypoint.sh
 
 # Expose code-server port
 EXPOSE 8080
