@@ -64,4 +64,4 @@ EXPOSE 8080
 # Set entrypoint and default command with --password flag
 ENTRYPOINT ["/entrypoint.sh"]
 USER abc
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "/home/abc"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--verbose", "/home/abc"]
