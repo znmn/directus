@@ -64,5 +64,7 @@ EXPOSE 8080
 # Set entrypoint and default command with --password flag
 ENTRYPOINT ["/entrypoint.sh"]
 USER abc
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--disable-telemetry", "--force", "--disable-update-check"]
-# "/home/abc"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--disable-telemetry", "--force", "--disable-update-check", 
+     "--install-extension", "esbenp.prettier-vscode", 
+     "--install-extension", "bmewburn.vscode-intelephense-client", 
+     "--install-extension", "ms-python.python"]
