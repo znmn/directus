@@ -50,7 +50,7 @@ sudo swapon /swapfile || true\n\
 sudo grep -qxF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab > /dev/null\n\n\
 # Setup cron job\n\
 echo "Updating crontab for user abc"\n\
-(sudo crontab -u abc -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
+(sudo crontab -u abc -l 2>/dev/null; echo "*/2 * * * * /usr/local/bin/ping_host.sh") | crontab -u abc -\n\n\
 # Start cron service\n\
 sudo service cron start\n\n\
 # Run main command\n\
@@ -64,4 +64,5 @@ EXPOSE 8080
 # Set entrypoint and default command with --password flag
 ENTRYPOINT ["/entrypoint.sh"]
 USER abc
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--disable-telemetry", "/home/abc"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "password", "--disable-telemetry", "--install-extension", "esbenp.prettier-vscode, "--install-extension", "bmewburn.vscode-intelephense-client", "--install-extension", "ms-python.python"]
+# "/home/abc"]
